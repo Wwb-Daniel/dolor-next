@@ -21,9 +21,13 @@ export default defineConfig({
         }
       }
     },
-    minify: 'terser'
+    minify: 'terser',
+    target: 'es2020'
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'framer-motion', 'lucide-react']
+  },
+  define: {
+    global: 'globalThis'
   }
 });
