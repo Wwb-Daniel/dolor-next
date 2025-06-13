@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import type { UserProfile } from '../../lib/supabase';
 
 interface FollowersModalProps {
   userId: string;
@@ -12,12 +13,19 @@ interface FollowersModalProps {
   onClose: () => void;
 }
 
-interface UserProfile {
-  id: string;
-  username: string;
-  avatar_url?: string;
-  bio?: string;
-  followers_count: number;
+interface FollowData {
+  follower?: {
+    id: string;
+    username: string;
+    avatar_url?: string;
+    bio?: string;
+  };
+  following?: {
+    id: string;
+    username: string;
+    avatar_url?: string;
+    bio?: string;
+  };
 }
 
 const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }) => {
@@ -51,13 +59,11 @@ const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }
         query = supabase
           .from('follows')
           .select(`
-            follower_id,
             follower:profiles!follower_id(
               id,
               username,
               avatar_url,
-              bio,
-              followers_count
+              bio
             )
           `)
           .eq('following_id', userId);
@@ -65,24 +71,75 @@ const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }
         query = supabase
           .from('follows')
           .select(`
-            following_id,
             following:profiles!following_id(
               id,
               username,
               avatar_url,
-              bio,
-              followers_count
+              bio
             )
           `)
           .eq('follower_id', userId);
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Error en la consulta:', error);
+        throw error;
+      }
 
-      const userProfiles = data?.map(item => 
-        type === 'followers' ? item.follower : item.following
-      ).filter(Boolean) || [];
+      console.log('Datos recibidos de la consulta:', data);
+      
+      // Type-safe extraction of user profiles
+      const userProfiles: UserProfile[] = [];
+      
+      if (data) {
+        console.log('Procesando datos para tipo:', type);
+        for (const item of data as FollowData[]) {
+          let profile: UserProfile | undefined;
+          
+          if (type === 'followers' && item.follower) {
+            const followerData = item.follower;
+            // Obtener el conteo de seguidores para este usuario
+            const { count } = await supabase
+              .from('follows')
+              .select('*', { count: 'exact', head: true })
+              .eq('following_id', followerData.id);
+            
+            profile = {
+              id: followerData.id,
+              username: followerData.username,
+              avatar_url: followerData.avatar_url,
+              bio: followerData.bio,
+              followers_count: count || 0,
+              following_count: 0,
+              created_at: new Date().toISOString()
+            } as UserProfile;
+          } else if (type === 'following' && item.following) {
+            const followingData = item.following;
+            // Obtener el conteo de seguidores para este usuario
+            const { count } = await supabase
+              .from('follows')
+              .select('*', { count: 'exact', head: true })
+              .eq('following_id', followingData.id);
+            
+            profile = {
+              id: followingData.id,
+              username: followingData.username,
+              avatar_url: followingData.avatar_url,
+              bio: followingData.bio,
+              followers_count: count || 0,
+              following_count: 0,
+              created_at: new Date().toISOString()
+            } as UserProfile;
+          }
+          
+          if (profile) {
+            userProfiles.push(profile);
+          }
+        }
+      }
+
+      console.log('Perfiles finales:', userProfiles);
 
       setUsers(userProfiles);
       setFilteredUsers(userProfiles);
@@ -138,7 +195,7 @@ const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }
             <div className="p-8 text-center">
               <User size={48} className="mx-auto text-gray-600 mb-4" />
               <p className="text-gray-400">
-                {searchQuery ? 'No users found' : `No ${type} yet`}
+                {searchQuery ? 'No users found' : type === 'followers' ? 'No followers yet' : 'Not following anyone yet'}
               </p>
             </div>
           ) : (

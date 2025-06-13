@@ -12,9 +12,16 @@ interface AudioUsage {
   count: number;
 }
 
+// Extended AudioTrack type for this component
+interface AudioTrackWithUsage extends AudioTrack {
+  videos?: {
+    count: number;
+  };
+}
+
 const AudioTracksPage: React.FC = () => {
   const [audioTracks, setAudioTracks] = useState<AudioTrack[]>([]);
-  const [trendingTracks, setTrendingTracks] = useState<AudioTrack[]>([]);
+  const [trendingTracks, setTrendingTracks] = useState<AudioTrackWithUsage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,7 +67,7 @@ const AudioTracksPage: React.FC = () => {
       if (tracksError) throw tracksError;
 
       // Combinamos los datos de uso con los detalles de los audios
-      const tracksWithUsage = tracksData?.map(track => ({
+      const tracksWithUsage: AudioTrackWithUsage[] = tracksData?.map(track => ({
         ...track,
         videos: {
           count: (usageData as AudioUsage[]).find(usage => usage.audio_track_id === track.id)?.count || 0
@@ -123,7 +130,7 @@ const AudioTracksPage: React.FC = () => {
         });
       }
     });
-  }, [audioTracks]);
+  }, [audioTracks, audioDurations]);
 
   // Agregar efecto de limpieza para detener el audio cuando el componente se desmonta
   useEffect(() => {

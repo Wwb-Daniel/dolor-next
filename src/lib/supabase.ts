@@ -55,6 +55,10 @@ export type AudioTrack = {
   usage_count?: number;
   cover_image_url?: string;
   thumbnail_url?: string;
+  // Add videos property for usage tracking
+  videos?: {
+    count: number;
+  };
 }
 
 export type Video = {
@@ -96,6 +100,14 @@ export type Follow = {
   follower_id: string;
   following_id: string;
   created_at: string;
+}
+
+// Add proper types for follow relationships
+export type FollowWithProfile = {
+  follower_id: string;
+  following_id: string;
+  follower?: UserProfile[];
+  following?: UserProfile[];
 }
 
 export type VideoSave = {
