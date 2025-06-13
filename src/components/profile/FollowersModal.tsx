@@ -13,20 +13,19 @@ interface FollowersModalProps {
   onClose: () => void;
 }
 
-interface FollowData {
-  follower?: {
-    id: string;
-    username: string;
-    avatar_url?: string;
-    bio?: string;
-  };
-  following?: {
-    id: string;
-    username: string;
-    avatar_url?: string;
-    bio?: string;
-  };
-}
+// Definición correcta del tipo para los datos de perfil
+type ProfileData = {
+  id: string;
+  username: string;
+  avatar_url?: string;
+  bio?: string;
+};
+
+// Tipo para la respuesta de la base de datos
+type DatabaseResponse = {
+  follower?: { id: string; username: string; avatar_url?: string; bio?: string; }[];
+  following?: { id: string; username: string; avatar_url?: string; bio?: string; }[];
+};
 
 const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -93,12 +92,18 @@ const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }
       const userProfiles: UserProfile[] = [];
       
       if (data) {
-        console.log('Procesando datos para tipo:', type);
-        // Transformación segura de los datos
-        const parsedData = (data as unknown as { follower?: FollowData; following?: FollowData }[])
+        console.log('Procesando datos para tipo:', data);
+        // Transformación segura de los datos usando los tipos correctos
+        const parsedData = (data as DatabaseResponse[])
           .flatMap(item => {
-            const profile = type === 'followers' ? item.follower : item.following;
-            return profile ? [profile] : [];
+            const profiles = type === 'followers' ? item.follower : item.following;
+            if (!profiles) return [];
+            return profiles.map(profile => ({
+              id: profile.id,
+              username: profile.username,
+              avatar_url: profile.avatar_url,
+              bio: profile.bio
+            }));
           });
 
         for (const profileData of parsedData) {
