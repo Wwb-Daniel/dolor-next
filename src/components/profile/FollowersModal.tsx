@@ -94,48 +94,31 @@ const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }
       
       if (data) {
         console.log('Procesando datos para tipo:', type);
-        for (const item of data as FollowData[]) {
-          let profile: UserProfile | undefined;
+        // Transformación segura de los datos
+        const parsedData = (data as unknown as { follower?: FollowData; following?: FollowData }[])
+          .flatMap(item => {
+            const profile = type === 'followers' ? item.follower : item.following;
+            return profile ? [profile] : [];
+          });
+
+        for (const profileData of parsedData) {
+          // Obtener el conteo de seguidores para este usuario
+          const { count } = await supabase
+            .from('follows')
+            .select('*', { count: 'exact', head: true })
+            .eq('following_id', profileData.id);
           
-          if (type === 'followers' && item.follower) {
-            const followerData = item.follower;
-            // Obtener el conteo de seguidores para este usuario
-            const { count } = await supabase
-              .from('follows')
-              .select('*', { count: 'exact', head: true })
-              .eq('following_id', followerData.id);
-            
-            profile = {
-              id: followerData.id,
-              username: followerData.username,
-              avatar_url: followerData.avatar_url,
-              bio: followerData.bio,
-              followers_count: count || 0,
-              following_count: 0,
-              created_at: new Date().toISOString()
-            } as UserProfile;
-          } else if (type === 'following' && item.following) {
-            const followingData = item.following;
-            // Obtener el conteo de seguidores para este usuario
-            const { count } = await supabase
-              .from('follows')
-              .select('*', { count: 'exact', head: true })
-              .eq('following_id', followingData.id);
-            
-            profile = {
-              id: followingData.id,
-              username: followingData.username,
-              avatar_url: followingData.avatar_url,
-              bio: followingData.bio,
-              followers_count: count || 0,
-              following_count: 0,
-              created_at: new Date().toISOString()
-            } as UserProfile;
-          }
+          const profile: UserProfile = {
+            id: profileData.id,
+            username: profileData.username,
+            avatar_url: profileData.avatar_url,
+            bio: profileData.bio,
+            followers_count: count || 0,
+            following_count: 0,
+            created_at: new Date().toISOString()
+          };
           
-          if (profile) {
-            userProfiles.push(profile);
-          }
+          userProfiles.push(profile);
         }
       }
 
