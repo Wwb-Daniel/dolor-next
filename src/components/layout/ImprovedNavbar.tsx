@@ -56,20 +56,13 @@ const ImprovedNavbar: React.FC = () => {
                   className={`
                     relative px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2
                     ${item.isActive 
-                      ? 'bg-gradient-brand text-white shadow-lg' 
+                      ? 'bg-blue-700 shadow-lg' 
                       : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
                     }
                   `}
                 >
-                  <item.icon size={20} />
-                  <span className="font-medium">{item.label}</span>
-                  {item.isActive && (
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-brand rounded-lg opacity-20"
-                      layoutId="activeTab"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
+                  <item.icon size={20} className={`${item.isActive ? '!text-white' : ''}`} />
+                  <span className={`font-medium ${item.isActive ? '!text-white' : ''}`}>{item.label}</span>
                 </Link>
               ))}
             </div>
@@ -110,26 +103,26 @@ const ImprovedNavbar: React.FC = () => {
                   className={`
                     px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
                     ${feedType === 'all' 
-                      ? 'bg-blue-500 text-white shadow-md' 
+                      ? 'bg-blue-700 shadow-md' 
                       : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                     }
                   `}
                 >
-                  <Compass size={16} className="inline mr-2" />
-                  For You
+                  <Compass size={16} className={`inline mr-2 ${feedType === 'all' ? '!text-white' : ''}`} />
+                  <span className={`${feedType === 'all' ? '!text-white' : ''}`}>For You</span>
                 </button>
                 <button
                   onClick={() => setFeedType('following')}
                   className={`
                     px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
                     ${feedType === 'following' 
-                      ? 'bg-blue-500 text-white shadow-md' 
+                      ? 'bg-blue-700 shadow-md' 
                       : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                     }
                   `}
                 >
-                  <Users size={16} className="inline mr-2" />
-                  Following
+                  <Users size={16} className={`inline mr-2 ${feedType === 'following' ? '!text-white' : ''}`} />
+                  <span className={`${feedType === 'following' ? '!text-white' : ''}`}>Following</span>
                 </button>
               </div>
             </div>
@@ -186,11 +179,11 @@ const ImprovedNavbar: React.FC = () => {
                           setIsMenuOpen(false);
                         }}
                         className={`w-full flex items-center px-3 py-3 rounded-lg transition-colors ${
-                          feedType === 'all' ? 'bg-gradient-brand text-white' : 'text-gray-300 hover:bg-gray-800'
+                          feedType === 'all' ? 'bg-blue-700 text-white' : 'text-gray-300 hover:bg-gray-800'
                         }`}
                       >
                         <Compass size={20} className="mr-3" />
-                        For You
+                        <span className={`${feedType === 'all' ? '!text-white' : ''}`}>For You</span>
                       </button>
                       <button
                         onClick={() => {
@@ -198,11 +191,11 @@ const ImprovedNavbar: React.FC = () => {
                           setIsMenuOpen(false);
                         }}
                         className={`w-full flex items-center px-3 py-3 rounded-lg transition-colors ${
-                          feedType === 'following' ? 'bg-gradient-brand text-white' : 'text-gray-300 hover:bg-gray-800'
+                          feedType === 'following' ? 'bg-blue-700 text-white' : 'text-gray-300 hover:bg-gray-800'
                         }`}
                       >
                         <Users size={20} className="mr-3" />
-                        Following
+                        <span className={`${feedType === 'following' ? '!text-white' : ''}`}>Following</span>
                       </button>
                     </div>
                   </div>
@@ -218,13 +211,13 @@ const ImprovedNavbar: React.FC = () => {
                       className={`
                         w-full flex items-center px-3 py-3 rounded-lg transition-colors
                         ${item.isActive 
-                          ? 'bg-gradient-brand text-white' 
+                          ? 'bg-blue-700 text-white' 
                           : 'text-gray-300 hover:bg-gray-800'
                         }
                       `}
                     >
                       <item.icon size={20} className="mr-3" />
-                      <span className="font-medium">{item.label}</span>
+                      <span className={`font-medium ${item.isActive ? '!text-white' : ''}`}>{item.label}</span>
                     </Link>
                   ))}
                 </div>
