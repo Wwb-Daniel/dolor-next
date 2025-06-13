@@ -22,9 +22,9 @@ type ProfileData = {
 };
 
 // Tipo para la respuesta de la base de datos
-type DatabaseResponse = {
-  follower?: { id: string; username: string; avatar_url?: string; bio?: string; }[];
-  following?: { id: string; username: string; avatar_url?: string; bio?: string; }[];
+type DatabaseItem = {
+  follower?: ProfileData;
+  following?: ProfileData;
 };
 
 const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }) => {
@@ -86,51 +86,62 @@ const FollowersModal: React.FC<FollowersModalProps> = ({ userId, type, onClose }
         throw error;
       }
 
-      console.log('Datos recibidos de la consulta:', data);
+      console.log('Datos crudos recibidos:', JSON.stringify(data, null, 2));
       
-      // Type-safe extraction of user profiles
       const userProfiles: UserProfile[] = [];
       
       if (data) {
-        console.log('Procesando datos para tipo:', data);
-        // Transformación segura de los datos usando los tipos correctos
-        const parsedData = (data as DatabaseResponse[])
-          .flatMap(item => {
-            const profiles = type === 'followers' ? item.follower : item.following;
-            if (!profiles) return [];
-            return profiles.map(profile => ({
-              id: profile.id,
-              username: profile.username,
-              avatar_url: profile.avatar_url,
-              bio: profile.bio
-            }));
-          });
+        try {
+          // Intentamos procesar cada item individualmente
+          const typedData = (data as unknown) as DatabaseItem[];
+          console.log('Datos tipados:', typedData);
 
-        for (const profileData of parsedData) {
-          // Obtener el conteo de seguidores para este usuario
-          const { count } = await supabase
-            .from('follows')
-            .select('*', { count: 'exact', head: true })
-            .eq('following_id', profileData.id);
-          
-          const profile: UserProfile = {
-            id: profileData.id,
-            username: profileData.username,
-            avatar_url: profileData.avatar_url,
-            bio: profileData.bio,
-            followers_count: count || 0,
-            following_count: 0,
-            created_at: new Date().toISOString()
-          };
-          
-          userProfiles.push(profile);
+          for (const item of typedData) {
+            console.log('Procesando item:', JSON.stringify(item, null, 2));
+            
+            const profileData = type === 'followers' ? item.follower : item.following;
+            console.log('Perfil encontrado:', profileData);
+
+            if (profileData) {
+              // Obtener el conteo de seguidores para este usuario
+              const { count } = await supabase
+                .from('follows')
+                .select('*', { count: 'exact', head: true })
+                .eq('following_id', profileData.id);
+              
+              const profile: UserProfile = {
+                id: profileData.id,
+                username: profileData.username,
+                avatar_url: profileData.avatar_url,
+                bio: profileData.bio,
+                followers_count: count || 0,
+                following_count: 0,
+                created_at: new Date().toISOString()
+              };
+              
+              console.log('Perfil creado:', profile);
+              userProfiles.push(profile);
+            } else {
+              console.warn('No se encontró perfil en el item:', item);
+            }
+          }
+
+          console.log('Total de perfiles procesados:', userProfiles.length);
+          console.log('Perfiles finales:', userProfiles);
+
+          if (userProfiles.length === 0) {
+            console.warn('No se encontraron perfiles para mostrar');
+          }
+
+          setUsers(userProfiles);
+          setFilteredUsers(userProfiles);
+        } catch (error) {
+          console.error('Error procesando los datos:', error);
+          console.error('Datos que causaron el error:', data);
         }
+      } else {
+        console.warn('No se recibieron datos de la consulta');
       }
-
-      console.log('Perfiles finales:', userProfiles);
-
-      setUsers(userProfiles);
-      setFilteredUsers(userProfiles);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
